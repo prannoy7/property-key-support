@@ -1,0 +1,64 @@
+<idea-plugin>
+
+    <id>com.propertykey.support</id>
+    <name>Property Key Support</name>
+    <vendor>Prannoy Mathew</vendor>
+
+    <description><![CDATA[
+        <p>
+            Bean Validation and Jakarta Validation annotations often reference message keys in braces, such as
+            <code>{name.required}</code>, instead of plain property names. IntelliJ does not treat these as links to
+            <code>messages.properties</code> by default.
+        </p>
+        <p>
+            <b>Property Key Support</b> adds IDE support for that pattern so property keys stay easy to navigate
+            and maintain.
+        </p>
+
+        <h3>Features</h3>
+        <ul>
+            <li><b>Go to declaration</b> — Ctrl+Click a braced key in a Java <code>message</code> attribute to open the
+                matching entry in <code>messages.properties</code></li>
+            <li><b>Find usages</b> — from a property key in <code>messages.properties</code>, jump to every annotation
+                that references it</li>
+            <li><b>Code completion</b> — suggests available keys while editing <code>message</code> values and inserts
+                them in braced form</li>
+            <li><b>Unresolved key highlighting</b> — references are resolved through the standard IntelliJ reference
+                mechanism</li>
+        </ul>
+
+        <h3>Supported usage</h3>
+        <p>Works with string literals on the <code>message</code> attribute of Java validation annotations, for example:</p>
+        <pre><code>@NotNull(message = "{user.email.required}")
+@Size(min = 1, message = "{user.name.required}")</code></pre>
+        <p>Keys are resolved against all <code>messages.properties</code> files in the project.</p>
+
+        <h3>Compatibility</h3>
+        <ul>
+            <li>IntelliJ IDEA Community Edition and Ultimate Edition</li>
+            <li>Java projects with the bundled Properties plugin</li>
+        </ul>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <ul>
+            <li>Initial release</li>
+            <li>Navigation and Find Usages between braced property keys and <code>messages.properties</code></li>
+            <li>Autocompletion for <code>message</code> attributes in Java annotations</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.properties</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <psi.referenceContributor
+                language="JAVA"
+                implementation="com.propertykey.support.PropertyKeyReferenceContributor"/>
+        <completion.contributor
+                language="JAVA"
+                implementationClass="com.propertykey.support.PropertyKeyCompletionContributor"/>
+    </extensions>
+
+</idea-plugin>
