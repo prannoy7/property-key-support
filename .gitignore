@@ -6,6 +6,9 @@ build/
 !**/src/test/**/build/
 .kotlin
 
+### Marketplace items ###
+marketplace/demo-project
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
