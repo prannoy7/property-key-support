@@ -11,7 +11,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Suggests keys from {@code messages.properties} while editing annotation {@code message} attributes.
+ * Suggests keys from message property files while editing annotation {@code message} attributes.
  */
 public class PropertyKeyCompletionContributor extends CompletionContributor {
 
@@ -43,12 +43,9 @@ public class PropertyKeyCompletionContributor extends CompletionContributor {
 
                 Project project = parameters.getPosition().getProject();
                 for (String key : PropertyKeysUtil.getAllKeys(project)) {
-                    filtered.addElement(
-                            LookupElementBuilder.create(key)
-                                    .withPresentableText("{" + key + "}")
-                                    .withTypeText("messages.properties")
-                                    .withInsertHandler(PropertyKeyCompletionContributor::insertBracedKey)
-                    );
+                    LookupElementBuilder element = PropertyKeyLookupElements.create(project, key)
+                            .withInsertHandler(PropertyKeyCompletionContributor::insertBracedKey);
+                    filtered.addElement(element);
                 }
             }
         };

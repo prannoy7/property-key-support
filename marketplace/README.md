@@ -78,6 +78,10 @@ If a braced key does not match any entry in your `messages.properties` files, In
 - All `messages.properties` files in the project are searched automatically.
 - Works with both Bean Validation (`javax.validation`) and Jakarta Validation (`jakarta.validation`).
 
+## Plugin signing
+
+See [SIGNING.md](SIGNING.md) for certificate generation and how to sign before `publishPlugin`. Signing is configured in `build.gradle.kts` via `CERTIFICATE_CHAIN`, `PRIVATE_KEY`, and `PRIVATE_KEY_PASSWORD` environment variables.
+
 ## Plugin icon
 
 The 40×40 SVG icons are in `src/main/resources/META-INF/`:

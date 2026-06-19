@@ -2,7 +2,10 @@ package com.propertykey.support;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
@@ -16,15 +19,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Resolves and indexes keys from {@code messages.properties} files in the current project.
+ * Resolves and indexes keys from message property files in the current project.
  */
 final class PropertyKeysUtil {
 
-    private static final String MESSAGES_FILE = "messages.properties";
+    private static final List<String> EXACT_MESSAGE_FILES = List.of(
+            "messages.properties",
+            "ValidationMessages.properties"
+    );
 
     private PropertyKeysUtil() {
     }
@@ -56,10 +64,26 @@ final class PropertyKeysUtil {
         return literal;
     }
 
+    static boolean isMessagePropertyFileName(@NotNull String fileName) {
+        if (EXACT_MESSAGE_FILES.contains(fileName)) {
+            return true;
+        }
+        return fileName.startsWith("messages_") && fileName.endsWith(".properties");
+    }
+
     static @NotNull Collection<PropertiesFile> findMessagePropertyFiles(@NotNull Project project) {
         GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-        Collection<VirtualFile> virtualFiles =
-                FilenameIndex.getVirtualFilesByName(MESSAGES_FILE, scope);
+        Set<VirtualFile> virtualFiles = new LinkedHashSet<>();
+
+        for (String fileName : EXACT_MESSAGE_FILES) {
+            virtualFiles.addAll(FilenameIndex.getVirtualFilesByName(fileName, scope));
+        }
+
+        for (VirtualFile virtualFile : FilenameIndex.getAllFilesByExt(project, "properties", scope)) {
+            if (isMessagePropertyFileName(virtualFile.getName())) {
+                virtualFiles.add(virtualFile);
+            }
+        }
 
         PsiManager psiManager = PsiManager.getInstance(project);
         List<PropertiesFile> files = new ArrayList<>();
@@ -73,18 +97,30 @@ final class PropertyKeysUtil {
     }
 
     static @Nullable IProperty findProperty(@NotNull Project project, @NotNull String key) {
+        PropertyKeyInfo info = findPropertyInfo(project, key);
+        return info != null ? info.property() : null;
+    }
+
+    static @Nullable PropertyKeyInfo findPropertyInfo(@NotNull Project project, @NotNull String key) {
         for (PropertiesFile file : findMessagePropertyFiles(project)) {
             IProperty property = file.findPropertyByKey(key);
             if (property != null) {
-                return property;
+                return new PropertyKeyInfo(key, property, file);
             }
-            // Some projects store the braces in the property key itself.
             property = file.findPropertyByKey("{" + key + "}");
             if (property != null) {
-                return property;
+                return new PropertyKeyInfo(key, property, file);
             }
         }
         return null;
+    }
+
+    static @Nullable String getPropertyValue(@NotNull IProperty property) {
+        String value = property.getValue();
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.replace('\n', ' ').trim();
     }
 
     static @NotNull List<String> getAllKeys(@NotNull Project project) {
@@ -103,5 +139,40 @@ final class PropertyKeysUtil {
             }
         }
         return List.copyOf(keys);
+    }
+
+    /**
+     * Preferred target for creating a new property: {@code messages.properties} when present,
+     * otherwise the first indexed message property file.
+     */
+    static @Nullable PropertiesFile findPrimaryMessagePropertyFile(@NotNull Project project) {
+        for (PropertiesFile file : findMessagePropertyFiles(project)) {
+            if ("messages.properties".equals(file.getName())) {
+                return file;
+            }
+        }
+        Collection<PropertiesFile> files = findMessagePropertyFiles(project);
+        return files.isEmpty() ? null : files.iterator().next();
+    }
+
+    /**
+     * Returns the best {@code src/main/resources} directory for creating {@code messages.properties}.
+     */
+    static @Nullable VirtualFile findResourcesDirectory(@NotNull Project project) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+            for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(false)) {
+                VirtualFile resources = root.getParent().findChild("resources");
+                if (resources != null && resources.isDirectory()) {
+                    return resources;
+                }
+            }
+        }
+        return null;
+    }
+
+    record PropertyKeyInfo(@NotNull String key, @NotNull IProperty property, @NotNull PropertiesFile file) {
+        @NotNull String sourceFileName() {
+            return file.getName();
+        }
     }
 }

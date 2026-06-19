@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.propertykey"
-version = "1.0.0"
+version = "1.1.0"
 
 val ideaVersion = "2025.1"
 
@@ -28,15 +28,25 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         name = "Property Key Support"
-        version = "1.0.0"
+        version = "1.1.0"
         vendor {
             name = "Prannoy Mathew"
         }
         changeNotes = """
+            <h3>1.1.0</h3>
+            <ul>
+                <li>Richer code completion with message text preview and source file name</li>
+                <li>Support for <code>ValidationMessages.properties</code> and <code>messages_*.properties</code> locale files</li>
+                <li>Rename refactoring between Java keys and property files</li>
+                <li>Quick fix to create missing keys in <code>messages.properties</code></li>
+                <li>Gutter icon for unresolved property keys</li>
+            </ul>
+            <h3>1.0.0</h3>
             <ul>
                 <li>Initial release</li>
                 <li>Navigation and Find Usages between braced property keys and <code>messages.properties</code></li>
                 <li>Autocompletion for <code>message</code> attributes in Java annotations</li>
+                <li>Unresolved key highlighting</li>
             </ul>
         """.trimIndent()
         ideaVersion {
@@ -49,6 +59,12 @@ intellijPlatform {
             create(IntelliJPlatformType.IntellijIdeaCommunity, ideaVersion)
             create(IntelliJPlatformType.IntellijIdeaUltimate, ideaVersion)
         }
+    }
+
+    signing {
+        certificateChain.set(providers.environmentVariable("CERTIFICATE_CHAIN"))
+        privateKey.set(providers.environmentVariable("PRIVATE_KEY"))
+        password.set(providers.environmentVariable("PRIVATE_KEY_PASSWORD"))
     }
 }
 

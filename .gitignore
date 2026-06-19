@@ -9,6 +9,10 @@ build/
 ### Marketplace items ###
 marketplace/demo-project
 
+### Plugin signing ###
+private.pem
+chain.crt
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
